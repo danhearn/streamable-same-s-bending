@@ -53,6 +53,19 @@ class StreamingSAMETS(Module):
 
         audio_labels = ["(signal) Channel %d" % d for d in range(1, IO_CHANNELS + 1)]
         latent_labels = ["(signal) Latent %d" % d for d in range(1, LATENT_DIM + 1)]
+        # Scalar bending attributes — enc and dec blocks 0-5: scale, add, noise, attn, ff
+        for i in range(6):
+            self.register_attribute(f"enc_bend_scale_{i}", 1.0)
+            self.register_attribute(f"enc_bend_add_{i}", 0.0)
+            self.register_attribute(f"enc_bend_noise_{i}", 0.0)
+            self.register_attribute(f"enc_attn_scale_{i}", 1.0)
+            self.register_attribute(f"enc_ff_scale_{i}", 1.0)
+            self.register_attribute(f"dec_bend_scale_{i}", 1.0)
+            self.register_attribute(f"dec_bend_add_{i}", 0.0)
+            self.register_attribute(f"dec_bend_noise_{i}", 0.0)
+            self.register_attribute(f"dec_attn_scale_{i}", 1.0)
+            self.register_attribute(f"dec_ff_scale_{i}", 1.0)
+
         self.register_method(
             "forward", in_channels=IO_CHANNELS, in_ratio=1, out_channels=IO_CHANNELS,
             out_ratio=1, input_labels=audio_labels, output_labels=audio_labels,
@@ -68,6 +81,266 @@ class StreamingSAMETS(Module):
             out_ratio=1, input_labels=latent_labels, output_labels=audio_labels,
             test_method=False, test_device=test_device,
         )
+
+    # --- enc bend scale ---
+    @torch.jit.export
+    def get_enc_bend_scale_0(self) -> float: return self.core.enc_transformer.bend_global_scale_0[0].item()
+    @torch.jit.export
+    def set_enc_bend_scale_0(self, v: float) -> int: self.core.enc_transformer.bend_global_scale_0.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_bend_scale_1(self) -> float: return self.core.enc_transformer.bend_global_scale_1[0].item()
+    @torch.jit.export
+    def set_enc_bend_scale_1(self, v: float) -> int: self.core.enc_transformer.bend_global_scale_1.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_bend_scale_2(self) -> float: return self.core.enc_transformer.bend_global_scale_2[0].item()
+    @torch.jit.export
+    def set_enc_bend_scale_2(self, v: float) -> int: self.core.enc_transformer.bend_global_scale_2.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_bend_scale_3(self) -> float: return self.core.enc_transformer.bend_global_scale_3[0].item()
+    @torch.jit.export
+    def set_enc_bend_scale_3(self, v: float) -> int: self.core.enc_transformer.bend_global_scale_3.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_bend_scale_4(self) -> float: return self.core.enc_transformer.bend_global_scale_4[0].item()
+    @torch.jit.export
+    def set_enc_bend_scale_4(self, v: float) -> int: self.core.enc_transformer.bend_global_scale_4.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_bend_scale_5(self) -> float: return self.core.enc_transformer.bend_global_scale_5[0].item()
+    @torch.jit.export
+    def set_enc_bend_scale_5(self, v: float) -> int: self.core.enc_transformer.bend_global_scale_5.fill_(v); return 0
+
+    # --- enc bend add ---
+    @torch.jit.export
+    def get_enc_bend_add_0(self) -> float: return self.core.enc_transformer.bend_global_add_0[0].item()
+    @torch.jit.export
+    def set_enc_bend_add_0(self, v: float) -> int: self.core.enc_transformer.bend_global_add_0.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_bend_add_1(self) -> float: return self.core.enc_transformer.bend_global_add_1[0].item()
+    @torch.jit.export
+    def set_enc_bend_add_1(self, v: float) -> int: self.core.enc_transformer.bend_global_add_1.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_bend_add_2(self) -> float: return self.core.enc_transformer.bend_global_add_2[0].item()
+    @torch.jit.export
+    def set_enc_bend_add_2(self, v: float) -> int: self.core.enc_transformer.bend_global_add_2.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_bend_add_3(self) -> float: return self.core.enc_transformer.bend_global_add_3[0].item()
+    @torch.jit.export
+    def set_enc_bend_add_3(self, v: float) -> int: self.core.enc_transformer.bend_global_add_3.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_bend_add_4(self) -> float: return self.core.enc_transformer.bend_global_add_4[0].item()
+    @torch.jit.export
+    def set_enc_bend_add_4(self, v: float) -> int: self.core.enc_transformer.bend_global_add_4.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_bend_add_5(self) -> float: return self.core.enc_transformer.bend_global_add_5[0].item()
+    @torch.jit.export
+    def set_enc_bend_add_5(self, v: float) -> int: self.core.enc_transformer.bend_global_add_5.fill_(v); return 0
+
+    # --- enc bend noise ---
+    @torch.jit.export
+    def get_enc_bend_noise_0(self) -> float: return self.core.enc_transformer.bend_noise_std_0[0].item()
+    @torch.jit.export
+    def set_enc_bend_noise_0(self, v: float) -> int: self.core.enc_transformer.bend_noise_std_0.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_bend_noise_1(self) -> float: return self.core.enc_transformer.bend_noise_std_1[0].item()
+    @torch.jit.export
+    def set_enc_bend_noise_1(self, v: float) -> int: self.core.enc_transformer.bend_noise_std_1.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_bend_noise_2(self) -> float: return self.core.enc_transformer.bend_noise_std_2[0].item()
+    @torch.jit.export
+    def set_enc_bend_noise_2(self, v: float) -> int: self.core.enc_transformer.bend_noise_std_2.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_bend_noise_3(self) -> float: return self.core.enc_transformer.bend_noise_std_3[0].item()
+    @torch.jit.export
+    def set_enc_bend_noise_3(self, v: float) -> int: self.core.enc_transformer.bend_noise_std_3.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_bend_noise_4(self) -> float: return self.core.enc_transformer.bend_noise_std_4[0].item()
+    @torch.jit.export
+    def set_enc_bend_noise_4(self, v: float) -> int: self.core.enc_transformer.bend_noise_std_4.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_bend_noise_5(self) -> float: return self.core.enc_transformer.bend_noise_std_5[0].item()
+    @torch.jit.export
+    def set_enc_bend_noise_5(self, v: float) -> int: self.core.enc_transformer.bend_noise_std_5.fill_(v); return 0
+
+    # --- enc attn scale ---
+    @torch.jit.export
+    def get_enc_attn_scale_0(self) -> float: return self.core.enc_transformer.blocks_first[0].attn_scale[0].item()
+    @torch.jit.export
+    def set_enc_attn_scale_0(self, v: float) -> int: self.core.enc_transformer.blocks_first[0].attn_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_attn_scale_1(self) -> float: return self.core.enc_transformer.blocks_first[1].attn_scale[0].item()
+    @torch.jit.export
+    def set_enc_attn_scale_1(self, v: float) -> int: self.core.enc_transformer.blocks_first[1].attn_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_attn_scale_2(self) -> float: return self.core.enc_transformer.blocks_first[2].attn_scale[0].item()
+    @torch.jit.export
+    def set_enc_attn_scale_2(self, v: float) -> int: self.core.enc_transformer.blocks_first[2].attn_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_attn_scale_3(self) -> float: return self.core.enc_transformer.blocks_second[0].attn_scale[0].item()
+    @torch.jit.export
+    def set_enc_attn_scale_3(self, v: float) -> int: self.core.enc_transformer.blocks_second[0].attn_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_attn_scale_4(self) -> float: return self.core.enc_transformer.blocks_second[1].attn_scale[0].item()
+    @torch.jit.export
+    def set_enc_attn_scale_4(self, v: float) -> int: self.core.enc_transformer.blocks_second[1].attn_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_attn_scale_5(self) -> float: return self.core.enc_transformer.blocks_second[2].attn_scale[0].item()
+    @torch.jit.export
+    def set_enc_attn_scale_5(self, v: float) -> int: self.core.enc_transformer.blocks_second[2].attn_scale.fill_(v); return 0
+
+    # --- enc ff scale ---
+    @torch.jit.export
+    def get_enc_ff_scale_0(self) -> float: return self.core.enc_transformer.blocks_first[0].ff_scale[0].item()
+    @torch.jit.export
+    def set_enc_ff_scale_0(self, v: float) -> int: self.core.enc_transformer.blocks_first[0].ff_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_ff_scale_1(self) -> float: return self.core.enc_transformer.blocks_first[1].ff_scale[0].item()
+    @torch.jit.export
+    def set_enc_ff_scale_1(self, v: float) -> int: self.core.enc_transformer.blocks_first[1].ff_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_ff_scale_2(self) -> float: return self.core.enc_transformer.blocks_first[2].ff_scale[0].item()
+    @torch.jit.export
+    def set_enc_ff_scale_2(self, v: float) -> int: self.core.enc_transformer.blocks_first[2].ff_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_ff_scale_3(self) -> float: return self.core.enc_transformer.blocks_second[0].ff_scale[0].item()
+    @torch.jit.export
+    def set_enc_ff_scale_3(self, v: float) -> int: self.core.enc_transformer.blocks_second[0].ff_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_ff_scale_4(self) -> float: return self.core.enc_transformer.blocks_second[1].ff_scale[0].item()
+    @torch.jit.export
+    def set_enc_ff_scale_4(self, v: float) -> int: self.core.enc_transformer.blocks_second[1].ff_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_enc_ff_scale_5(self) -> float: return self.core.enc_transformer.blocks_second[2].ff_scale[0].item()
+    @torch.jit.export
+    def set_enc_ff_scale_5(self, v: float) -> int: self.core.enc_transformer.blocks_second[2].ff_scale.fill_(v); return 0
+
+    # --- dec bend scale (global multiplier per block) ---
+    @torch.jit.export
+    def get_dec_bend_scale_0(self) -> float: return self.core.dec_transformer.bend_global_scale_0[0].item()
+    @torch.jit.export
+    def set_dec_bend_scale_0(self, v: float) -> int: self.core.dec_transformer.bend_global_scale_0.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_bend_scale_1(self) -> float: return self.core.dec_transformer.bend_global_scale_1[0].item()
+    @torch.jit.export
+    def set_dec_bend_scale_1(self, v: float) -> int: self.core.dec_transformer.bend_global_scale_1.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_bend_scale_2(self) -> float: return self.core.dec_transformer.bend_global_scale_2[0].item()
+    @torch.jit.export
+    def set_dec_bend_scale_2(self, v: float) -> int: self.core.dec_transformer.bend_global_scale_2.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_bend_scale_3(self) -> float: return self.core.dec_transformer.bend_global_scale_3[0].item()
+    @torch.jit.export
+    def set_dec_bend_scale_3(self, v: float) -> int: self.core.dec_transformer.bend_global_scale_3.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_bend_scale_4(self) -> float: return self.core.dec_transformer.bend_global_scale_4[0].item()
+    @torch.jit.export
+    def set_dec_bend_scale_4(self, v: float) -> int: self.core.dec_transformer.bend_global_scale_4.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_bend_scale_5(self) -> float: return self.core.dec_transformer.bend_global_scale_5[0].item()
+    @torch.jit.export
+    def set_dec_bend_scale_5(self, v: float) -> int: self.core.dec_transformer.bend_global_scale_5.fill_(v); return 0
+
+    # --- dec bend add (global additive offset per block) ---
+    @torch.jit.export
+    def get_dec_bend_add_0(self) -> float: return self.core.dec_transformer.bend_global_add_0[0].item()
+    @torch.jit.export
+    def set_dec_bend_add_0(self, v: float) -> int: self.core.dec_transformer.bend_global_add_0.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_bend_add_1(self) -> float: return self.core.dec_transformer.bend_global_add_1[0].item()
+    @torch.jit.export
+    def set_dec_bend_add_1(self, v: float) -> int: self.core.dec_transformer.bend_global_add_1.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_bend_add_2(self) -> float: return self.core.dec_transformer.bend_global_add_2[0].item()
+    @torch.jit.export
+    def set_dec_bend_add_2(self, v: float) -> int: self.core.dec_transformer.bend_global_add_2.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_bend_add_3(self) -> float: return self.core.dec_transformer.bend_global_add_3[0].item()
+    @torch.jit.export
+    def set_dec_bend_add_3(self, v: float) -> int: self.core.dec_transformer.bend_global_add_3.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_bend_add_4(self) -> float: return self.core.dec_transformer.bend_global_add_4[0].item()
+    @torch.jit.export
+    def set_dec_bend_add_4(self, v: float) -> int: self.core.dec_transformer.bend_global_add_4.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_bend_add_5(self) -> float: return self.core.dec_transformer.bend_global_add_5[0].item()
+    @torch.jit.export
+    def set_dec_bend_add_5(self, v: float) -> int: self.core.dec_transformer.bend_global_add_5.fill_(v); return 0
+
+    # --- dec attn scale (attention residual scale per block) ---
+    @torch.jit.export
+    def get_dec_attn_scale_0(self) -> float: return self.core.dec_transformer.blocks_first[0].attn_scale[0].item()
+    @torch.jit.export
+    def set_dec_attn_scale_0(self, v: float) -> int: self.core.dec_transformer.blocks_first[0].attn_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_attn_scale_1(self) -> float: return self.core.dec_transformer.blocks_first[1].attn_scale[0].item()
+    @torch.jit.export
+    def set_dec_attn_scale_1(self, v: float) -> int: self.core.dec_transformer.blocks_first[1].attn_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_attn_scale_2(self) -> float: return self.core.dec_transformer.blocks_first[2].attn_scale[0].item()
+    @torch.jit.export
+    def set_dec_attn_scale_2(self, v: float) -> int: self.core.dec_transformer.blocks_first[2].attn_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_attn_scale_3(self) -> float: return self.core.dec_transformer.blocks_second[0].attn_scale[0].item()
+    @torch.jit.export
+    def set_dec_attn_scale_3(self, v: float) -> int: self.core.dec_transformer.blocks_second[0].attn_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_attn_scale_4(self) -> float: return self.core.dec_transformer.blocks_second[1].attn_scale[0].item()
+    @torch.jit.export
+    def set_dec_attn_scale_4(self, v: float) -> int: self.core.dec_transformer.blocks_second[1].attn_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_attn_scale_5(self) -> float: return self.core.dec_transformer.blocks_second[2].attn_scale[0].item()
+    @torch.jit.export
+    def set_dec_attn_scale_5(self, v: float) -> int: self.core.dec_transformer.blocks_second[2].attn_scale.fill_(v); return 0
+
+    # --- dec ff scale (feedforward residual scale per block) ---
+    @torch.jit.export
+    def get_dec_ff_scale_0(self) -> float: return self.core.dec_transformer.blocks_first[0].ff_scale[0].item()
+    @torch.jit.export
+    def set_dec_ff_scale_0(self, v: float) -> int: self.core.dec_transformer.blocks_first[0].ff_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_ff_scale_1(self) -> float: return self.core.dec_transformer.blocks_first[1].ff_scale[0].item()
+    @torch.jit.export
+    def set_dec_ff_scale_1(self, v: float) -> int: self.core.dec_transformer.blocks_first[1].ff_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_ff_scale_2(self) -> float: return self.core.dec_transformer.blocks_first[2].ff_scale[0].item()
+    @torch.jit.export
+    def set_dec_ff_scale_2(self, v: float) -> int: self.core.dec_transformer.blocks_first[2].ff_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_ff_scale_3(self) -> float: return self.core.dec_transformer.blocks_second[0].ff_scale[0].item()
+    @torch.jit.export
+    def set_dec_ff_scale_3(self, v: float) -> int: self.core.dec_transformer.blocks_second[0].ff_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_ff_scale_4(self) -> float: return self.core.dec_transformer.blocks_second[1].ff_scale[0].item()
+    @torch.jit.export
+    def set_dec_ff_scale_4(self, v: float) -> int: self.core.dec_transformer.blocks_second[1].ff_scale.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_ff_scale_5(self) -> float: return self.core.dec_transformer.blocks_second[2].ff_scale[0].item()
+    @torch.jit.export
+    def set_dec_ff_scale_5(self, v: float) -> int: self.core.dec_transformer.blocks_second[2].ff_scale.fill_(v); return 0
+
+    # --- dec bend noise (noise std per block) ---
+    @torch.jit.export
+    def get_dec_bend_noise_0(self) -> float: return self.core.dec_transformer.bend_noise_std_0[0].item()
+    @torch.jit.export
+    def set_dec_bend_noise_0(self, v: float) -> int: self.core.dec_transformer.bend_noise_std_0.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_bend_noise_1(self) -> float: return self.core.dec_transformer.bend_noise_std_1[0].item()
+    @torch.jit.export
+    def set_dec_bend_noise_1(self, v: float) -> int: self.core.dec_transformer.bend_noise_std_1.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_bend_noise_2(self) -> float: return self.core.dec_transformer.bend_noise_std_2[0].item()
+    @torch.jit.export
+    def set_dec_bend_noise_2(self, v: float) -> int: self.core.dec_transformer.bend_noise_std_2.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_bend_noise_3(self) -> float: return self.core.dec_transformer.bend_noise_std_3[0].item()
+    @torch.jit.export
+    def set_dec_bend_noise_3(self, v: float) -> int: self.core.dec_transformer.bend_noise_std_3.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_bend_noise_4(self) -> float: return self.core.dec_transformer.bend_noise_std_4[0].item()
+    @torch.jit.export
+    def set_dec_bend_noise_4(self, v: float) -> int: self.core.dec_transformer.bend_noise_std_4.fill_(v); return 0
+    @torch.jit.export
+    def get_dec_bend_noise_5(self) -> float: return self.core.dec_transformer.bend_noise_std_5[0].item()
+    @torch.jit.export
+    def set_dec_bend_noise_5(self, v: float) -> int: self.core.dec_transformer.bend_noise_std_5.fill_(v); return 0
 
     @torch.jit.export
     def encode(self, x: torch.Tensor) -> torch.Tensor:

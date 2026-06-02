@@ -157,10 +157,13 @@ class TransformerBlock(nn.Module):
         self.attn = DifferentialAttention()
         self.ff_norm = DyT(DIM)
         self.ff = GLUFeedForward()
+        # Residual stream scalars (1.0 = identity, 0.0 = ablate component)
+        self.register_buffer("attn_scale", torch.ones(1))
+        self.register_buffer("ff_scale", torch.ones(1))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = x + self.attn(self.pre_norm(x))
-        x = x + self.ff(self.ff_norm(x))
+        x = x + self.attn(self.pre_norm(x)) * self.attn_scale[0]
+        x = x + self.ff(self.ff_norm(x)) * self.ff_scale[0]
         return x
 
 
@@ -170,6 +173,13 @@ class _ChunkedTransformer(nn.Module):
     Input/output: (B, internal_T, DIM) where internal_T is a multiple of
     EFFECTIVE_CHUNK and internal_T + 2*SHIFT is too (guaranteed when the latent
     length is a multiple of ALIGN).
+
+    Per-block bending buffers are registered for activation manipulation via
+    nn_tilde_bending's set_named_buffer message. Default values are no-ops:
+    bend_add_N zeros (additive), bend_mul_N ones (multiplicative),
+    bend_noise_std_N zero (noise disabled). Set from Max with e.g.:
+      [set_buffer core.dec_transformer.bend_mul_2 0. 0. 1. ...]
+      [set_buffer core.dec_transformer.bend_noise_std_4 0.3]
     """
 
     def __init__(self):
@@ -178,6 +188,52 @@ class _ChunkedTransformer(nn.Module):
         self.shift = SHIFT
         self.blocks_first = nn.ModuleList([TransformerBlock() for _ in range(NUM_BLOCKS // 2)])
         self.blocks_second = nn.ModuleList([TransformerBlock() for _ in range(NUM_BLOCKS - NUM_BLOCKS // 2)])
+        # Per-block bending buffers (block 0-2 = first half, 3-5 = second half)
+        self.register_buffer("bend_add_0", torch.zeros(DIM))
+        self.register_buffer("bend_mul_0", torch.ones(DIM))
+        self.register_buffer("bend_noise_std_0", torch.zeros(1))
+        self.register_buffer("bend_add_1", torch.zeros(DIM))
+        self.register_buffer("bend_mul_1", torch.ones(DIM))
+        self.register_buffer("bend_noise_std_1", torch.zeros(1))
+        self.register_buffer("bend_add_2", torch.zeros(DIM))
+        self.register_buffer("bend_mul_2", torch.ones(DIM))
+        self.register_buffer("bend_noise_std_2", torch.zeros(1))
+        self.register_buffer("bend_add_3", torch.zeros(DIM))
+        self.register_buffer("bend_mul_3", torch.ones(DIM))
+        self.register_buffer("bend_noise_std_3", torch.zeros(1))
+        self.register_buffer("bend_add_4", torch.zeros(DIM))
+        self.register_buffer("bend_mul_4", torch.ones(DIM))
+        self.register_buffer("bend_noise_std_4", torch.zeros(1))
+        self.register_buffer("bend_add_5", torch.zeros(DIM))
+        self.register_buffer("bend_mul_5", torch.ones(DIM))
+        self.register_buffer("bend_noise_std_5", torch.zeros(1))
+        # Scalar controls — one float per block, set via nn~ attributes
+        self.register_buffer("bend_global_scale_0", torch.ones(1))
+        self.register_buffer("bend_global_add_0", torch.zeros(1))
+        self.register_buffer("bend_global_scale_1", torch.ones(1))
+        self.register_buffer("bend_global_add_1", torch.zeros(1))
+        self.register_buffer("bend_global_scale_2", torch.ones(1))
+        self.register_buffer("bend_global_add_2", torch.zeros(1))
+        self.register_buffer("bend_global_scale_3", torch.ones(1))
+        self.register_buffer("bend_global_add_3", torch.zeros(1))
+        self.register_buffer("bend_global_scale_4", torch.ones(1))
+        self.register_buffer("bend_global_add_4", torch.zeros(1))
+        self.register_buffer("bend_global_scale_5", torch.ones(1))
+        self.register_buffer("bend_global_add_5", torch.zeros(1))
+
+    def _apply_bend(self, x: torch.Tensor, add: torch.Tensor, mul: torch.Tensor,
+                    noise_std: torch.Tensor, global_scale: torch.Tensor,
+                    global_add: torch.Tensor) -> torch.Tensor:
+        # x: (B*nc, eff, DIM) — per-dim bends broadcast over batch and time;
+        # scalar controls (global_scale / global_add) applied after.
+        d = mul.shape[0]
+        x = x * mul.reshape(1, 1, d)
+        x = x + add.reshape(1, 1, d)
+        x = x * global_scale[0]
+        x = x + global_add[0]
+        if noise_std[0] > 0.0:
+            x = x + torch.randn_like(x) * noise_std[0]
+        return x
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         b = x.shape[0]
@@ -186,11 +242,26 @@ class _ChunkedTransformer(nn.Module):
         eff = self.effective_chunk
         shift = self.shift
 
+        bend_adds = [self.bend_add_0, self.bend_add_1, self.bend_add_2,
+                     self.bend_add_3, self.bend_add_4, self.bend_add_5]
+        bend_muls = [self.bend_mul_0, self.bend_mul_1, self.bend_mul_2,
+                     self.bend_mul_3, self.bend_mul_4, self.bend_mul_5]
+        bend_noises = [self.bend_noise_std_0, self.bend_noise_std_1, self.bend_noise_std_2,
+                       self.bend_noise_std_3, self.bend_noise_std_4, self.bend_noise_std_5]
+        bend_scales = [self.bend_global_scale_0, self.bend_global_scale_1, self.bend_global_scale_2,
+                       self.bend_global_scale_3, self.bend_global_scale_4, self.bend_global_scale_5]
+        bend_gadds = [self.bend_global_add_0, self.bend_global_add_1, self.bend_global_add_2,
+                      self.bend_global_add_3, self.bend_global_add_4, self.bend_global_add_5]
+
         # First half: standard chunk boundaries.
         nc1 = internal_t // eff
         x = x.reshape(b * nc1, eff, d)
+        i: int = 0
         for blk in self.blocks_first:
             x = blk(x)
+            x = self._apply_bend(x, bend_adds[i], bend_muls[i], bend_noises[i],
+                                 bend_scales[i], bend_gadds[i])
+            i += 1
         x = x.reshape(b, internal_t, d)
 
         # Second half: pad half a chunk on each side, re-chunk with offset boundaries.
@@ -200,8 +271,12 @@ class _ChunkedTransformer(nn.Module):
         t2 = internal_t + 2 * shift
         nc2 = t2 // eff
         x = x.reshape(b * nc2, eff, d)
+        i = 3
         for blk in self.blocks_second:
             x = blk(x)
+            x = self._apply_bend(x, bend_adds[i], bend_muls[i], bend_noises[i],
+                                 bend_scales[i], bend_gadds[i])
+            i += 1
         x = x.reshape(b, t2, d)
         x = x[:, shift:t2 - shift, :]
         return x
